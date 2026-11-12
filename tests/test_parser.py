@@ -1,4 +1,5 @@
 import base64
+import warnings
 
 import pytest
 from curl_cffi import CurlOpt
@@ -116,6 +117,15 @@ class TestRequestParser:
         request = make_request(headers={"X-Custom": "value"})
 
         assert RequestParser(request).as_dict()["headers"]["X-Custom"] == "value"
+
+    def test_headers_have_no_deprecation_warning(self):
+        request = make_request(headers={"X-Custom": ["a", "b"]})
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            headers = RequestParser(request).as_dict()["headers"]
+
+        assert headers["X-Custom"] == "a,b"
 
     @pytest.mark.parametrize(
         "cookies, expected",

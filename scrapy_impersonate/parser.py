@@ -84,8 +84,15 @@ class RequestParser:
 
     @property
     def headers(self) -> dict:
-        headers = self._request.headers.to_unicode_dict()
-        return dict(headers)
+        headers = self._request.headers
+        # Scrapy 2.20 deprecates to_unicode_dict(); to_tuple_list() exists since Scrapy 2.15.
+        if not hasattr(headers, "to_tuple_list"):
+            return dict(headers.to_unicode_dict())
+        # Join multiple values with "," like to_unicode_dict() did.
+        result: dict = {}
+        for key, value in headers.to_tuple_list():
+            result[key] = f"{result[key]},{value}" if key in result else value
+        return result
 
     @property
     def cookies(self) -> dict:
